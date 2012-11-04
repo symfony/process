@@ -698,7 +698,11 @@ class Process
     {
         $this->updateStatus();
         
-        return $this->processInformation['pid'];
+        if (array_key_exists('pid', $this->processInformation)) {
+            return $this->processInformation['pid'];
+        }
+        
+        return null;
     }
 
     /**
