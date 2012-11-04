@@ -688,6 +688,18 @@ class Process
 
         return $this->status;
     }
+    
+    /**
+     * Gets the process id
+     * 
+     * @return int
+     */
+    public function getProcessId()
+    {
+        $this->updateStatus();
+        
+        return $this->processInformation['pid'];
+    }
 
     /**
      * Stops the process.
