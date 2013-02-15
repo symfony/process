@@ -230,12 +230,16 @@ class Process
         //@see https://bugs.php.net/bug.php?id=51800
         if (defined('PHP_WINDOWS_VERSION_BUILD')) {
             $this->fileHandles = array(
+                self::STDIN => tmpfile(),
                 self::STDOUT => tmpfile(),
+                self::STDERR => tmpfile(),
             );
             $this->readBytes = array(
+                self::STDIN => 0,
                 self::STDOUT => 0,
+                self::STDERR => 0,
             );
-            $descriptors = array(array('pipe', 'r'), $this->fileHandles[self::STDOUT], array('pipe', 'w'));
+            $descriptors = array($this->fileHandles[self::STDIN], $this->fileHandles[self::STDOUT], $this->fileHandles[self::STDERR]);
         } else {
             $descriptors = array(
                 array('pipe', 'r'), // stdin
