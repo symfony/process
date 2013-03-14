@@ -43,6 +43,7 @@ class Process
      * @param array   $options     An array of options for proc_open
      *
      * @throws \RuntimeException When proc_open is not installed
+     * @throws \RuntimeException When working directory is not a directory
      *
      * @api
      */
@@ -53,11 +54,14 @@ class Process
         }
 
         $this->commandline = $commandline;
-        $this->cwd = $cwd;
         // on windows, if the cwd changed via chdir(), proc_open defaults to the dir where php was started
-        if (null === $this->cwd && defined('PHP_WINDOWS_VERSION_BUILD')) {
-            $this->cwd = getcwd();
+        if (null === $cwd && defined('PHP_WINDOWS_VERSION_BUILD')) {
+            $cwd = getcwd();
         }
+        if (!is_dir($cwd)) {
+            throw new \RuntimeException(sprintf('The working directory %s is not a directory.', var_export($cwd, true)));
+        }
+        $this->cwd = $cwd;
         if (null !== $env) {
             $this->env = array();
             foreach ($env as $key => $value) {
@@ -107,7 +111,11 @@ class Process
             }
         };
 
-        $descriptors = array(array('pipe', 'r'), array('pipe', 'w'), array('pipe', 'w'));
+        $descriptors = array(
+            array('pipe', 'r'),
+            array('pipe', 'w'),
+            array('pipe', 'w')
+        );
 
         $process = proc_open($this->commandline, $descriptors, $pipes, $this->cwd, $this->env, $this->options);
 
@@ -116,7 +124,7 @@ class Process
         }
 
         foreach ($pipes as $pipe) {
-            stream_set_blocking($pipe, false);
+            stream_set_blocking($pipe, 0);
         }
 
         if (null === $this->stdin) {
@@ -157,13 +165,26 @@ class Process
 
             foreach ($r as $pipe) {
                 $type = array_search($pipe, $pipes);
-                $data = fread($pipe, 8192);
-                if (strlen($data) > 0) {
-                    call_user_func($callback, $type == 1 ? 'out' : 'err', $data);
-                }
-                if (false === $data || feof($pipe)) {
-                    fclose($pipe);
-                    unset($pipes[$type]);
+                $bytesToRead = 8192;
+                $metaData = stream_get_meta_data($pipe);
+                if ($metaData['blocked']) {
+                    if ($metaData['unread_bytes']) {
+                        $data = fread($pipe, min($metaData['unread_bytes'], $bytesToRead));
+                        call_user_func($callback, $type == 1 ? 'out' : 'err', $data);
+                    }
+                    if ($metaData['eof']) {
+                        fclose($pipe);
+                        unset($pipes[$type]);
+                    }
+                } else {
+                    $data = fread($pipe, $bytesToRead);
+                    if (strlen($data) > 0) {
+                        call_user_func($callback, $type == 1 ? 'out' : 'err', $data);
+                    }
+                    if (false === $data || feof($pipe)) {
+                        fclose($pipe);
+                        unset($pipes[$type]);
+                    }
                 }
             }
         }
