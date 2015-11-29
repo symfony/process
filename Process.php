@@ -787,7 +787,7 @@ class Process
         if ($this->isRunning()) {
             if ('\\' === DIRECTORY_SEPARATOR && !$this->isSigchildEnabled()) {
                 exec(sprintf('taskkill /F /T /PID %d 2>&1', $this->getPid()), $output, $exitCode);
-                if ($exitCode > 0) {
+                if ($exitCode > 0 && $this->isRunning()) {
                     throw new RuntimeException('Unable to kill the process');
                 }
             }
