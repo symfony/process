@@ -37,7 +37,7 @@ print $process->getOutput();
 
 And if you want to be able to get some feedback in real-time, just pass an
 anonymous function to the ``run()`` method and you will get the output buffer
-as it becomes available:
+as it becomes available instead:
 
 ```php
 use Symfony\Component\Process\Process;
