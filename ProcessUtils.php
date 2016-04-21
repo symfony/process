@@ -44,7 +44,7 @@ class ProcessUtils
         //@see https://bugs.php.net/bug.php?id=49446
         if ('\\' === DIRECTORY_SEPARATOR) {
             if ('' === $argument) {
-                return escapeshellarg($argument);
+                return self::escapeshellarg($argument);
             }
 
             $escapedArgument = '';
@@ -71,7 +71,16 @@ class ProcessUtils
             return $escapedArgument;
         }
 
-        return escapeshellarg($argument);
+        return self::escapeshellarg($argument);
+    }
+    
+    protected static function escapeshellarg($input)
+    {
+        if(function_exists('escapeshellarg'))
+            return escapeshellarg($input);
+
+        $input = str_replace('\'', '\\\'', $input);
+        return '\''.$input.'\'';
     }
 
     /**
