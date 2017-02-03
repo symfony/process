@@ -30,6 +30,7 @@ class ProcessBuilder
     private $inheritEnv = true;
     private $prefix = array();
     private $outputDisabled = false;
+    private $escape = true;
 
     /**
      * Constructor.
@@ -256,6 +257,30 @@ class ProcessBuilder
 
         return $this;
     }
+    
+    /**
+     * Disables auto escaping of arguments.
+     * 
+     * @return $this
+     */
+    public function disableEscaping()
+    {
+        $this->escape = false;
+        
+        return $this;
+    }
+    
+    /**
+     * Enables auto escaping of arguments.
+     * 
+     * @return $this
+     */
+    public function disableEscaping()
+    {
+        $this->escape = true;
+        
+        return $this;
+    }
 
     /**
      * Creates a Process instance and returns it.
@@ -271,7 +296,11 @@ class ProcessBuilder
         }
 
         $arguments = array_merge($this->prefix, $this->arguments);
-        $script = implode(' ', array_map(array(__NAMESPACE__.'\\ProcessUtils', 'escapeArgument'), $arguments));
+        if ($this->escape) {
+            $arguments = array_map(array(__NAMESPACE__.'\\ProcessUtils', 'escapeArgument'), $arguments)
+        }
+        
+        $script = implode(' ', $arguments);
 
         $process = new Process($script, $this->cwd, $this->env, $this->input, $this->timeout, $this->options);
 
