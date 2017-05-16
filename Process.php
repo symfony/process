@@ -859,6 +859,22 @@ class Process implements \IteratorAggregate
 
         return $this->status;
     }
+    
+    /**
+     * Gets the process id
+     * 
+     * @return int
+     */
+    public function getProcessId()
+    {
+        $this->updateStatus();
+        
+        if (array_key_exists('pid', $this->processInformation)) {
+            return $this->processInformation['pid'];
+        }
+        
+        return null;
+    }
 
     /**
      * Stops the process.
