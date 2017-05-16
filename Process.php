@@ -894,6 +894,8 @@ class Process implements \IteratorAggregate
             $this->close();
         }
 
+        $this->callback = null;
+
         return $this->exitcode;
     }
 
