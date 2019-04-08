@@ -52,7 +52,7 @@ class ExecutableFinder
     {
         if (ini_get('open_basedir')) {
             $searchPath = explode(PATH_SEPARATOR, ini_get('open_basedir'));
-            $dirs = [];
+            $dirs = [$extraDirs];
             foreach ($searchPath as $path) {
                 // Silencing against https://bugs.php.net/69240
                 if (@is_dir($path)) {
