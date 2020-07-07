@@ -71,6 +71,7 @@ class Process implements \IteratorAggregate
     private $incrementalErrorOutputOffset = 0;
     private $tty = false;
     private $pty;
+    private $options = ['suppress_errors' => true, 'create_new_console' => false];
 
     private $useFileHandles = false;
     /** @var PipesInterface */
@@ -303,11 +304,11 @@ class Process implements \IteratorAggregate
             $commandline = $this->replacePlaceholders($commandline, $env);
         }
 
-        $options = ['suppress_errors' => true];
-
         if ('\\' === \DIRECTORY_SEPARATOR) {
-            $options['bypass_shell'] = true;
-            $commandline = $this->prepareWindowsCommandLine($commandline, $env);
+            if (!$this->options['create_new_console']) {
+                $this->options['bypass_shell'] = true;
+                $commandline = $this->prepareWindowsCommandLine($commandline, $env);
+            }
         } elseif (!$this->useFileHandles && $this->isSigchildEnabled()) {
             // last exit code is output on the fourth pipe and caught to work around --enable-sigchild
             $descriptors[3] = ['pipe', 'w'];
@@ -332,23 +333,26 @@ class Process implements \IteratorAggregate
             throw new RuntimeException(sprintf('The provided cwd "%s" does not exist.', $this->cwd));
         }
 
-        $this->process = @proc_open($commandline, $descriptors, $this->processPipes->pipes, $this->cwd, $envPairs, $options);
+        $this->process = @proc_open($commandline, $descriptors, $pipes, $this->cwd, $envPairs, $this->options );
 
-        if (!\is_resource($this->process)) {
-            throw new RuntimeException('Unable to launch a new process.');
+        if(!$this->options['create_new_console']){
+
+            if (!\is_resource($this->process)) {
+                throw new RuntimeException('Unable to launch a new process.');
+            }
+            $this->status = self::STATUS_STARTED;
+            
+            if (isset($descriptors[3])) {
+                $this->fallbackStatus['pid'] = (int) fgets($this->processPipes->pipes[3]);
+            }
+    
+            if ($this->tty) {
+                return;
+            }
+    
+            $this->updateStatus(false);
+            $this->checkTimeout();
         }
-        $this->status = self::STATUS_STARTED;
-
-        if (isset($descriptors[3])) {
-            $this->fallbackStatus['pid'] = (int) fgets($this->processPipes->pipes[3]);
-        }
-
-        if ($this->tty) {
-            return;
-        }
-
-        $this->updateStatus(false);
-        $this->checkTimeout();
     }
 
     /**
@@ -1218,6 +1222,37 @@ class Process implements \IteratorAggregate
         }
 
         return $this->starttime;
+    }
+
+    /**
+     * setWinOptions sets windows proc_open specific options
+     * useful with the option create_new_console to open a process and an detach it 
+     * from your php script so it can run in background
+     * requires minimum PHP 7.4.4
+     */
+    public function setWinOptions(array $options)
+    {
+        if ('\\' !== \DIRECTORY_SEPARATOR) {
+            throw new LogicException('setWinOptions is only for setting Windows proc_open options.');
+        }
+
+        $defaultOptions = $this->options;
+        $existingWinOptions = ['suppress_errors', 'bypass_shell', 'blocking_pipes', 'create_process_group', 'create_new_console' ];
+
+        foreach ($options as $key => $value) {
+            
+            if(!in_array($key, $existingWinOptions)){
+                $this->options = $defaultOptions;
+                throw new LogicException($key.' is not a valid windows option for proc_open.');
+            }
+            
+            if(!is_bool($value)){
+                $this->options = $defaultOptions;
+                throw new LogicException('Value for '.$key.' is not bool');
+            }
+
+            $this->options[$key] = $value;
+        }
     }
 
     /**
