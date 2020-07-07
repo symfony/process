@@ -333,10 +333,9 @@ class Process implements \IteratorAggregate
             throw new RuntimeException(sprintf('The provided cwd "%s" does not exist.', $this->cwd));
         }
 
-        $this->process = @proc_open($commandline, $descriptors, $pipes, $this->cwd, $envPairs, $this->options );
+        $this->process = @proc_open($commandline, $descriptors, $this->processPipes->pipes, $this->cwd, $envPairs, $this->options );
 
         if(!$this->options['create_new_console']){
-
             if (!\is_resource($this->process)) {
                 throw new RuntimeException('Unable to launch a new process.');
             }
