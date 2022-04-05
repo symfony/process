@@ -1612,7 +1612,7 @@ class Process implements \IteratorAggregate
     /**
      * Escapes a string to be used as a shell argument.
      */
-    private function escapeArgument(?string $argument): string
+    protected function escapeArgument(?string $argument): string
     {
         if ('' === $argument || null === $argument) {
             return '""';
