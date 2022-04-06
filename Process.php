@@ -1286,7 +1286,7 @@ class Process implements \IteratorAggregate
     /**
      * Creates the descriptors needed by the proc_open.
      */
-    private function getDescriptors(): array
+    protected function getDescriptors(): array
     {
         if ($this->input instanceof \Iterator) {
             $this->input->rewind();
