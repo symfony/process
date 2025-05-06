@@ -1664,6 +1664,15 @@ class Process implements \IteratorAggregate
         );
 
         $cmd = 'cmd /V:ON /E:ON /D /C ('.str_replace("\n", ' ', $cmd).')';
+        static $comSpec;
+ 
+        if (!$comSpec && $comSpec = (new ExecutableFinder())->find('cmd.exe')) {
+            // Escape according to CommandLineToArgvW rules
+            $comSpec = '"'.preg_replace('{(\\\\*+)"}', '$1$1\"', $comSpec) .'"';
+        }
+ 
+        $cmd = ($comSpec !== null ? $comSpec : 'cmd').' /V:ON /E:ON /D /C ('.str_replace("\n", ' ', $cmd).')';
+
         foreach ($this->processPipes->getFiles() as $offset => $filename) {
             $cmd .= ' '.$offset.'>"'.$filename.'"';
         }

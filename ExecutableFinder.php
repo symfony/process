@@ -19,7 +19,7 @@ namespace Symfony\Component\Process;
  */
 class ExecutableFinder
 {
-    private $suffixes = ['.exe', '.bat', '.cmd', '.com'];
+    private $suffixes = [];
 
     /**
      * Replaces default suffixes of executable.
@@ -70,17 +70,36 @@ class ExecutableFinder
             );
         }
 
-        $suffixes = [''];
+        $suffixes = [];
         if ('\\' === \DIRECTORY_SEPARATOR) {
             $pathExt = getenv('PATHEXT');
-            $suffixes = array_merge($pathExt ? explode(\PATH_SEPARATOR, $pathExt) : $this->suffixes, $suffixes);
+            $suffixes = $this->suffixes;
+            $suffixes = array_merge($suffixes, $pathExt ? explode(\PATH_SEPARATOR, $pathExt) : ['.exe', '.bat', '.cmd', '.com']);
         }
+        $suffixes = '' !== pathinfo($name, PATHINFO_EXTENSION) ? array_merge([''], $suffixes) : array_merge($suffixes, ['']);
         foreach ($suffixes as $suffix) {
             foreach ($dirs as $dir) {
+                if ('' === $dir) {
+                    $dir = '.';
+                }
                 if (@is_file($file = $dir.\DIRECTORY_SEPARATOR.$name.$suffix) && ('\\' === \DIRECTORY_SEPARATOR || @is_executable($file))) {
                     return $file;
                 }
+ 
+                if (!@is_dir($dir) && basename($dir) === $name.$suffix && @is_executable($dir)) {
+                    return $dir;
+                }
             }
+        }
+
+        if ('\\' === \DIRECTORY_SEPARATOR || !\function_exists('exec') || \strlen($name) !== strcspn($name, '/'.\DIRECTORY_SEPARATOR)) {
+            return $default;
+        }
+
+        $execResult = exec('command -v -- '.escapeshellarg($name));
+
+        if (($executablePath = substr($execResult, 0, strpos($execResult, \PHP_EOL) ?: null)) && @is_executable($executablePath)) {
+            return $executablePath;
         }
 
         return $default;

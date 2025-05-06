@@ -35,6 +35,18 @@ class PhpExecutableFinder
      */
     public function find($includeArgs = true)
     {
+        if ($php = getenv('PHP_BINARY')) {
+            if (!is_executable($php) && !$php = $this->executableFinder->find($php)) {
+                return false;
+            }
+
+            if (@is_dir($php)) {
+                return false;
+            }
+
+            return $php;
+        }
+
         $args = $this->findArguments();
         $args = $includeArgs && $args ? ' '.implode(' ', $args) : '';
 
