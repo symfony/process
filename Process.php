@@ -52,7 +52,7 @@ class Process implements \IteratorAggregate
     public const ITER_SKIP_ERR = 8;     // Use this flag to skip STDERR while iterating
 
     /**
-     * @var \Closure('out'|'err', string)|null
+     * @var \Closure('out'|'err', string):bool|null
      */
     private ?\Closure $callback = null;
     private array|string $commandline;
