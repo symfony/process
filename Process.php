@@ -348,7 +348,7 @@ class Process implements \IteratorAggregate
         }
 
         $lastError = null;
-        set_error_handler(function ($type, $msg) use (&$lastError) {
+        set_error_handler(static function ($type, $msg) use (&$lastError) {
             $lastError = $msg;
 
             return true;
@@ -1308,7 +1308,7 @@ class Process implements \IteratorAggregate
     protected function buildCallback(?callable $callback = null): \Closure
     {
         if ($this->outputDisabled) {
-            return fn ($type, $data): bool => null !== $callback && $callback($type, $data);
+            return static fn ($type, $data): bool => null !== $callback && $callback($type, $data);
         }
 
         return function ($type, $data) use ($callback): bool {
@@ -1562,7 +1562,7 @@ class Process implements \IteratorAggregate
                     [^"%!^]*+
                 )++
             ) | [^"]*+ )"/x',
-            function ($m) use (&$env, $uid) {
+            static function ($m) use (&$env, $uid) {
                 static $varCount = 0;
                 static $varCache = [];
                 if (!isset($m[1])) {
