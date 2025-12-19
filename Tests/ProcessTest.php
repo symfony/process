@@ -693,6 +693,24 @@ class ProcessTest extends TestCase
         $this->assertFalse($process->isRunning());
     }
 
+    public function testStopDoesNotThrowAfterBrokenPipe()
+    {
+        if ('\\' === \DIRECTORY_SEPARATOR) {
+            $this->markTestSkipped('Broken pipe notices are specific to Unix-like platforms.');
+        }
+
+        $process = $this->getProcess([self::$phpBin, '-r', 'exit(0);'], null, null, str_repeat('*', PipesInterface::CHUNK_SIZE * 32));
+
+        $process->run();
+        $this->assertSame(0, $process->getExitCode());
+
+        $process->stop(0);
+
+        // __destruct() should not trigger a broken pipe notice
+        self::$process = $process = null;
+        gc_collect_cycles();
+    }
+
     public function testIsSuccessful()
     {
         $process = $this->getProcess('echo foo');
