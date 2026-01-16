@@ -30,7 +30,7 @@ use Symfony\Component\Process\Pipes\WindowsPipes;
  *
  * @implements \IteratorAggregate<string, string>
  *
- * @psalm-type EnvArray = array<string, array<string|\Stringable|false>>
+ * @psalm-type EnvArray = array<string, string|\Stringable|false>
  */
 class Process implements \IteratorAggregate
 {
