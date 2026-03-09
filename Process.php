@@ -53,6 +53,17 @@ class Process implements \IteratorAggregate
     public const ITER_SKIP_OUT = 4;     // Use this flag to skip STDOUT while iterating
     public const ITER_SKIP_ERR = 8;     // Use this flag to skip STDERR while iterating
 
+    /**
+     * Maximum number of UTF-16 code units allowed in the Windows environment block.
+     *
+     * The Win32 CreateProcess API encodes env vars as KEY=VALUE\0 in UTF-16LE,
+     * terminated by an extra \0. Exceeding this limit causes proc_open() to hang
+     * silently rather than returning false.
+     *
+     * @see https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-createprocessa
+     */
+    private const WINDOWS_ENV_BLOCK_MAX_LENGTH = 32767;
+
     /** @var \Closure('out'|'err', string):bool|null */
     private ?\Closure $callback = null;
     /** @var list<string>|string */
@@ -351,6 +362,10 @@ class Process implements \IteratorAggregate
             if (false !== $v && !\in_array($k = (string) $k, ['', 'argc', 'argv', 'ARGC', 'ARGV'], true) && !str_contains($k, '=') && !str_contains($k, "\0")) {
                 $envPairs[] = $k.'='.$v;
             }
+        }
+
+        if ('\\' === \DIRECTORY_SEPARATOR) {
+            $this->validateWindowsEnvBlockSize($envPairs);
         }
 
         if (!is_dir($this->cwd)) {
@@ -1695,5 +1710,17 @@ class Process implements \IteratorAggregate
         $env = ('\\' === \DIRECTORY_SEPARATOR ? array_intersect_ukey($env, $_SERVER, 'strcasecmp') : array_intersect_key($env, $_SERVER)) ?: $env;
 
         return $_ENV + ('\\' === \DIRECTORY_SEPARATOR ? array_diff_ukey($env, $_ENV, 'strcasecmp') : $env);
+    }
+
+    private function validateWindowsEnvBlockSize(array $envPairs): void
+    {
+        $block = implode("\0", $envPairs)."\0";
+        @preg_replace('/./u', '', $block, -1, $blockLength)
+            ?? preg_replace('/./', '', $block, -1, $blockLength);
+        $blockLength += 1 + preg_match_all('/[\xF0-\xF4][\x80-\xBF]{3}/', $block);
+
+        if ($blockLength > self::WINDOWS_ENV_BLOCK_MAX_LENGTH) {
+            throw new InvalidArgumentException(\sprintf('The environment block size (%d) exceeds the Windows limit of %d UTF-16 code units.', $blockLength, self::WINDOWS_ENV_BLOCK_MAX_LENGTH));
+        }
     }
 }
