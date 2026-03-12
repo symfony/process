@@ -504,6 +504,8 @@ class Process implements \IteratorAggregate
      * from the output in real-time while writing the standard input to the process.
      * It allows to have feedback from the independent process during execution.
      *
+     * @param-immediately-invoked-callable $callback
+     *
      * @param (callable('out'|'err', string):bool)|null $callback A PHP callback to run whenever there is some
      *                                                            output available on STDOUT or STDERR
      *
