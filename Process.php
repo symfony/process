@@ -66,7 +66,7 @@ class Process implements \IteratorAggregate
 
     /** @var \Closure('out'|'err', string):bool|null */
     private ?\Closure $callback = null;
-    /** @var list<string>|string */
+    /** @var string[]|string */
     private array|string $commandline;
     private ?string $cwd;
     /** @var EnvArray */
@@ -151,7 +151,7 @@ class Process implements \IteratorAggregate
     ];
 
     /**
-     * @param list<string>   $command The command to run and its arguments listed as separate entries
+     * @param string[]       $command The command to run and its arguments listed as separate entries
      * @param string|null    $cwd     The working directory or null to use the working dir of the current PHP process
      * @param EnvArray|null  $env     The environment variables or null to use the same environment as the current PHP process
      * @param mixed          $input   The input as stream resource, scalar or \Traversable, or null for no input
