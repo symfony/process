@@ -9,10 +9,10 @@
  * file that was distributed with this source code.
  */
 
-\define('ERR_SELECT_FAILED', 1);
-\define('ERR_TIMEOUT', 2);
-\define('ERR_READ_FAILED', 3);
-\define('ERR_WRITE_FAILED', 4);
+define('ERR_SELECT_FAILED', 1);
+define('ERR_TIMEOUT', 2);
+define('ERR_READ_FAILED', 3);
+define('ERR_WRITE_FAILED', 4);
 
 $read = [\STDIN];
 $write = [\STDOUT, \STDERR];
@@ -34,7 +34,7 @@ while ($read || $write) {
         exit(ERR_TIMEOUT);
     }
 
-    if (\in_array(\STDOUT, $w) && '' !== $out) {
+    if (in_array(\STDOUT, $w) && '' !== $out) {
         $written = fwrite(\STDOUT, (string) $out, 32768);
         if (false === $written) {
             exit(ERR_WRITE_FAILED);
@@ -45,7 +45,7 @@ while ($read || $write) {
         $write = array_diff($write, [\STDOUT]);
     }
 
-    if (\in_array(\STDERR, $w) && '' !== $err) {
+    if (in_array(\STDERR, $w) && '' !== $err) {
         $written = fwrite(\STDERR, (string) $err, 32768);
         if (false === $written) {
             exit(ERR_WRITE_FAILED);
