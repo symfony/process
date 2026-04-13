@@ -1656,9 +1656,7 @@ class ProcessTest extends TestCase
     public function testMultipleCallsToProcGetStatus()
     {
         $process = $this->getProcess('echo foo');
-        $process->start(static function () use ($process) {
-            return $process->isRunning();
-        });
+        $process->start(static fn () => $process->isRunning());
         while ($process->isRunning()) {
             usleep(1000);
         }
@@ -1668,9 +1666,7 @@ class ProcessTest extends TestCase
     public function testFailingProcessWithMultipleCallsToProcGetStatus()
     {
         $process = $this->getProcess('exit 123');
-        $process->start(static function () use ($process) {
-            return $process->isRunning();
-        });
+        $process->start(static fn () => $process->isRunning());
         while ($process->isRunning()) {
             usleep(1000);
         }
@@ -1683,9 +1679,7 @@ class ProcessTest extends TestCase
     public function testLongRunningProcessWithMultipleCallsToProcGetStatus()
     {
         $process = $this->getProcess('sleep 1 && echo "done" && php -r "exit(0);"');
-        $process->start(static function () use ($process) {
-            return $process->isRunning();
-        });
+        $process->start(static fn () => $process->isRunning());
         while ($process->isRunning()) {
             usleep(1000);
         }
@@ -1698,9 +1692,7 @@ class ProcessTest extends TestCase
     public function testLongRunningProcessWithMultipleCallsToProcGetStatusError()
     {
         $process = $this->getProcess('sleep 1 && echo "failure" && php -r "exit(123);"');
-        $process->start(static function () use ($process) {
-            return $process->isRunning();
-        });
+        $process->start(static fn () => $process->isRunning());
         while ($process->isRunning()) {
             usleep(1000);
         }
