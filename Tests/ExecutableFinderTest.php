@@ -153,7 +153,7 @@ class ExecutableFinderTest extends TestCase
 
         try {
             touch('executable');
-            chmod('executable', 0700);
+            chmod('executable', 0o700);
 
             $finder = new ExecutableFinder();
             $result = $finder->find('executable');

@@ -141,7 +141,7 @@ class ProcessTest extends TestCase
         $start = microtime(true);
 
         $completeOutput = '';
-        $result = $p->waitUntil(function ($type, $output) use (&$completeOutput) {
+        $result = $p->waitUntil(static function ($type, $output) use (&$completeOutput) {
             return str_contains($completeOutput .= $output, 'One more');
         });
         $this->assertTrue($result);
@@ -154,7 +154,7 @@ class ProcessTest extends TestCase
     {
         $p = $this->getProcess('echo foo');
         $p->start();
-        $this->assertFalse($p->waitUntil(fn () => false));
+        $this->assertFalse($p->waitUntil(static fn () => false));
     }
 
     public function testAllOutputIsActuallyReadOnTermination()
@@ -191,7 +191,7 @@ class ProcessTest extends TestCase
     public function testCallbacksAreExecutedWithStart()
     {
         $process = $this->getProcess('echo foo');
-        $process->start(function ($type, $buffer) use (&$data) {
+        $process->start(static function ($type, $buffer) use (&$data) {
             $data .= $buffer;
         });
 
@@ -209,7 +209,7 @@ class ProcessTest extends TestCase
         // disabling output + not passing a callback to start() => read support disabled
         $process->disableOutput();
         $process->start();
-        $process->wait(function ($type, $buffer) use (&$data) {
+        $process->wait(static function ($type, $buffer) use (&$data) {
             $data .= $buffer;
         });
     }
@@ -275,7 +275,7 @@ class ProcessTest extends TestCase
 
         $p = $this->getProcessForCode('stream_copy_to_stream(STDIN, STDOUT);');
         $p->setInput($stream);
-        $p->start(function ($type, $data) use ($stream) {
+        $p->start(static function ($type, $data) use ($stream) {
             if ('hello' === $data) {
                 fclose($stream);
             }
@@ -369,7 +369,7 @@ class ProcessTest extends TestCase
         $p = $this->getProcessForCode('echo \'foo\';');
 
         $called = false;
-        $p->run(function ($type, $buffer) use (&$called) {
+        $p->run(static function ($type, $buffer) use (&$called) {
             $called = 'foo' === $buffer;
         });
 
@@ -382,7 +382,7 @@ class ProcessTest extends TestCase
         $p->disableOutput();
 
         $called = false;
-        $p->run(function ($type, $buffer) use (&$called) {
+        $p->run(static function ($type, $buffer) use (&$called) {
             $called = 'foo' === $buffer;
         });
 
@@ -1152,7 +1152,7 @@ class ProcessTest extends TestCase
     public function testStopTerminatesProcessCleanly()
     {
         $process = $this->getProcessForCode('echo 123; sleep(42);');
-        $process->run(function () use ($process) {
+        $process->run(static function () use ($process) {
             $process->stop();
         });
         $this->assertTrue(true, 'A call to stop() is not expected to cause wait() to throw a RuntimeException');
@@ -1161,7 +1161,7 @@ class ProcessTest extends TestCase
     public function testKillSignalTerminatesProcessCleanly()
     {
         $process = $this->getProcessForCode('echo 123; sleep(43);');
-        $process->run(function () use ($process) {
+        $process->run(static function () use ($process) {
             $process->signal(9); // SIGKILL
         });
         $this->assertTrue(true, 'A call to signal() is not expected to cause wait() to throw a RuntimeException');
@@ -1170,7 +1170,7 @@ class ProcessTest extends TestCase
     public function testTermSignalTerminatesProcessCleanly()
     {
         $process = $this->getProcessForCode('echo 123; sleep(44);');
-        $process->run(function () use ($process) {
+        $process->run(static function () use ($process) {
             $process->signal(15); // SIGTERM
         });
         $this->assertTrue(true, 'A call to signal() is not expected to cause wait() to throw a RuntimeException');
@@ -1239,7 +1239,7 @@ class ProcessTest extends TestCase
 
     public function testIteratorInput()
     {
-        $input = function () {
+        $input = static function () {
             yield 'ping';
             yield 'pong';
         };
@@ -1256,7 +1256,7 @@ class ProcessTest extends TestCase
         $process = $this->getProcessForCode('echo \'ping\'; echo fread(STDIN, 4); echo fread(STDIN, 4);');
         $process->setInput($input);
 
-        $process->start(function ($type, $data) use ($input) {
+        $process->start(static function ($type, $data) use ($input) {
             if ('ping' === $data) {
                 $input->write('pang');
             } elseif (!$input->isClosed()) {
@@ -1273,7 +1273,7 @@ class ProcessTest extends TestCase
     {
         $i = 0;
         $stream = fopen('php://memory', 'w+');
-        $stream = function () use ($stream, &$i) {
+        $stream = static function () use ($stream, &$i) {
             if ($i < 3) {
                 rewind($stream);
                 fwrite($stream, ++$i);
@@ -1291,7 +1291,7 @@ class ProcessTest extends TestCase
 
         $process = $this->getProcessForCode('echo fread(STDIN, 3);');
         $process->setInput($input);
-        $process->start(function ($type, $data) use ($input) {
+        $process->start(static function ($type, $data) use ($input) {
             $input->close();
         });
 
@@ -1302,7 +1302,7 @@ class ProcessTest extends TestCase
     public function testInputStreamWithGenerator()
     {
         $input = new InputStream();
-        $input->onEmpty(function ($input) {
+        $input->onEmpty(static function ($input) {
             yield 'pong';
             $input->close();
         });
@@ -1319,11 +1319,11 @@ class ProcessTest extends TestCase
     {
         $i = 0;
         $input = new InputStream();
-        $input->onEmpty(function () use (&$i) { ++$i; });
+        $input->onEmpty(static function () use (&$i) { ++$i; });
 
         $process = $this->getProcessForCode('echo 123; echo fread(STDIN, 1); echo 456;');
         $process->setInput($input);
-        $process->start(function ($type, $data) use ($input) {
+        $process->start(static function ($type, $data) use ($input) {
             if ('123' === $data) {
                 $input->close();
             }
