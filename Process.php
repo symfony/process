@@ -354,6 +354,10 @@ class Process implements \IteratorAggregate
 
         $envPairs = [];
         foreach ($env as $k => $v) {
+            if (!\is_scalar($v ?? '') && !$v instanceof \Stringable) {
+                continue;
+            }
+
             if (false !== $v && !\in_array($k = (string) $k, ['', 'argc', 'argv', 'ARGC', 'ARGV'], true) && !str_contains($k, '=') && !str_contains($k, "\0")) {
                 $envPairs[] = $k.'='.$v;
             }
